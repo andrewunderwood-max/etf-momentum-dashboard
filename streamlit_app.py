@@ -266,3 +266,4 @@ with st.expander("Run details"):
 
 st.divider()
 st.caption("Data via yfinance - Refreshes automatically every hour - First load each hour takes a few minutes while data is fetched")
+ 
