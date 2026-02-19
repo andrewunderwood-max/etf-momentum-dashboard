@@ -8,10 +8,10 @@ import math
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-# ââ Page config ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# \u2500\u2500 Page config \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 st.set_page_config(
     page_title="ETF Momentum Dashboard",
-    page_icon="ð",
+    page_icon="\U0001f4c8",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -41,21 +41,22 @@ EXCLUDE_KEYWORDS = {
     "defined volatility", # structured outcome ETFs
 }
 
-# ââ Data pipeline (cached 1 hour) ââââââââââââââââââââââââââââââââââââââââââââââ
+# \u2500\u2500 Data pipeline (cached 1 hour) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def run_pipeline():
     status = {}
 
-    # ââ Market hours check (US Eastern) ââââââââââââââââââââââââââââââââââââââ
+    # \u2500\u2500 Market hours check (US Eastern) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     et_now = datetime.now(ZoneInfo("America/New_York"))
     _h, _m = et_now.hour, et_now.minute
     market_open = (
-        et_now.weekday() < 5                        # MondayâFriday
+        et_now.weekday() < 5                        # Monday\u2013Friday
         and (_h > 9 or (_h == 9 and _m >= 30))      # at or after 09:30
         and _h < 16                                  # before 16:00
     )
 
-    # ââ Step 1: ETF Universe ââââââââââââââââââââââââââââââââââââââââââââââââââ
+    # \u2500\u2500 Step 1: ETF Universe \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     def fetch(url):
         r = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
         return r.text
@@ -111,9 +112,9 @@ def run_pipeline():
     if len(etf_tickers) < 100:
         etf_tickers = sorted(set(etf_tickers + SEED))
 
-    # ââ Filter out leveraged/inverse ETFs ââââââââââââââââââââââââââââââââââââ
+    # \u2500\u2500 Filter out leveraged/inverse ETFs \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     # Use name_map (already built from Nasdaq CSV) for a fast, no-API check.
-    # Tickers with no name entry pass through â they're either unknown or
+    # Tickers with no name entry pass through \u2014 they're either unknown or
     # genuinely obscure ETFs, not typically leveraged products.
     def is_leveraged(ticker):
         name_lower = name_map.get(ticker, "").lower()
@@ -126,7 +127,7 @@ def run_pipeline():
     status["universe"]     = len(etf_tickers)
     status["excluded_lev"] = n_excluded
 
-    # ââ Step 2: Daily closes (batched) ââââââââââââââââââââââââââââââââââââââââ
+    # \u2500\u2500 Step 2: Daily closes (batched) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     all_batches = []
     for i in range(0, len(etf_tickers), BATCH_SIZE):
         batch = etf_tickers[i:i+BATCH_SIZE]
@@ -144,9 +145,9 @@ def run_pipeline():
 
     raw = pd.concat(all_batches, axis=1) if all_batches else pd.DataFrame()
 
-    # ââ Step 2b: Live intraday prices (market hours only) ââââââââââââââââââââ
-    # Outside 09:30â16:00 ET the 1-min data just echoes the prior close,
-    # which would make every 1D return â 0%.  Skip it entirely when closed.
+    # \u2500\u2500 Step 2b: Live intraday prices (market hours only) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    # Outside 09:30\u201316:00 ET the 1-min data just echoes the prior close,
+    # which would make every 1D return \u2248 < 0%.  Skip it entirely when closed.
     live_prices = {}
     if market_open:
         for i in range(0, len(etf_tickers), BATCH_SIZE):
@@ -174,7 +175,7 @@ def run_pipeline():
                 pass
             time.sleep(1)
 
-    # ââ Step 3: Returns âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+    # \u2500\u2500 Step 3: Returns \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     closes = {}
     for t in etf_tickers:
         try:
@@ -208,7 +209,7 @@ def run_pipeline():
     df = pd.DataFrame(records).dropna(subset=["ret_1d", "ret_5d", "ret_1m"])
     status["returned"] = len(df)
 
-    # ââ Step 4: Rank & composite score ââââââââââââââââââââââââââââââââââââââââ
+    # \u2500\u2500 Step 4: Rank & composite score \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     df["rank_1d"] = df["ret_1d"].rank(ascending=False, method="min")
     df["rank_5d"] = df["ret_5d"].rank(ascending=False, method="min")
     df["rank_1m"] = df["ret_1m"].rank(ascending=False, method="min")
@@ -227,7 +228,7 @@ def run_pipeline():
     # Flag which top-50 ETFs are also in the strict overlap
     df_top["In Overlap"] = df_top["Ticker"].isin(overlap)
 
-    # ââ Step 5: Names (Nasdaq CSV â Yahoo Finance chart API fallback) ââââââââ
+    # \u2500\u2500 Step 5: Names (Nasdaq CSV \u2192 Yahoo Finance chart API fallback) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     names = {t: name_map.get(t, "") for t in df_top["Ticker"]}
 
     for t in df_top["Ticker"].tolist():
@@ -242,7 +243,7 @@ def run_pipeline():
 
     df_top["Name"] = df_top["Ticker"].map(names).fillna("")
 
-    # ââ Second-pass leveraged filter ââââââââââââââââââââââââââââââââââââââââââ
+    # \u2500\u2500 Second-pass leveraged filter \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     # Catches any ETFs not in the Nasdaq CSV whose full names (now resolved via
     # Yahoo Finance API) reveal them to be leveraged/inverse/structured products.
     def name_is_excluded(name):
@@ -250,7 +251,7 @@ def run_pipeline():
         return any(kw in n for kw in EXCLUDE_KEYWORDS)
 
     before2 = len(df_top)
-    df_top  = df_top[~df_top["Name"].apply(name_is_excluded)].reset_index(drop=True)
+    df_top  = df_top[~df_top["Name"].apply	(name_is_excluded)].reset_index(drop=True)
     status["excluded_lev"] += before2 - len(df_top)
 
     status.update({
@@ -266,36 +267,36 @@ def run_pipeline():
 
     return df_top, df, status
 
-# ââ UI âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-st.markdown("## ð ETF Momentum Dashboard")
+# \u2500\u2500 UI \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+st.markdown("## \U0001f4c8 ETF Momentum Dashboard")
 
 col_hdr, col_refresh = st.columns([5, 1])
 with col_refresh:
-    if st.button("ð Refresh now"):
+    if st.button("\U0001f504 Refresh now"):
         st.cache_data.clear()
         st.rerun()
 
 st.divider()
 
-with st.spinner("Loading ETF data â this takes a few minutes on first load each hourâ¦"):
+with st.spinner("Loading ETF data \u2014 this takes a few minutes on first load each hour\u2026"):
     df_overlap, df_full, status = run_pipeline()
 
-# ââ Header metrics âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Universe",        f"{status['universe']:,} ETFs")
+# \u2500\u2500 Header metrics \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("Universe",        f"{status['universe']:,n} ETFs")
 m2.metric("Strong overlap",  status["overlap_count"],
-          help=f"ETFs in top-{status['cutoff']} across all 3 windows simultaneously")
-m3.metric("Prices",          "Live â" if status["market_open"] else "Prior close")
+          help=f"ETFs in top:{status['cutoff']} across all 3 windows simultaneously")
+m3.metric("Prices",          "Live \u2713" if status["market_open"] else "Prior close")
 m4.metric("Last updated",    status["run_time"])
 
 st.subheader(f"Top {DISPLAY_N} Momentum ETFs")
 st.caption(
-    "Ranked by composite score â average rank across 1-day, 5-day, and 1-month returns. "
+    "Ranked by composite score \u2014 average rank across 1-day, 5-day, and 1-month returns. "
     f"Lower score = stronger momentum across all windows. "
-    f"â marks the {status['overlap_count']} ETFs that also appear in the top-{status['cutoff']} of every window simultaneously."
+    f"\u2705 marks the {status['overlap_count']} ETFs that also appear in the top-{status['cutoff']} of every window simultaneously."
 )
 
-# ââ Format table âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# \u2500\u2500 Format table \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 # Use numeric columns so clicking the column header sorts correctly
 display = df_overlap[["Ticker", "Name", "ret_1d", "ret_5d", "ret_1m",
                        "rank_1d", "rank_5d", "rank_1m", "composite",
@@ -304,10 +305,10 @@ display = df_overlap[["Ticker", "Name", "ret_1d", "ret_5d", "ret_1m",
 display["rank_1d"]    = display["rank_1d"].apply(lambda x: int(x) if pd.notna(x) else None)
 display["rank_5d"]    = display["rank_5d"].apply(lambda x: int(x) if pd.notna(x) else None)
 display["rank_1m"]    = display["rank_1m"].apply(lambda x: int(x) if pd.notna(x) else None)
-display["â"]         = display["In Overlap"].apply(lambda x: "â" if x else "")
+display["\u2705"]         = display["In Overlap"].apply(lambda x: "\u2705" if x else "")
 
 display = display[["Ticker", "Name", "ret_1d", "ret_5d", "ret_1m",
-                    "rank_1d", "rank_5d", "rank_1m", "composite", "â"]]
+                    "rank_1d", "rank_5d", "rank_1m", "composite", "\u2705"]]
 
 st.dataframe(
     display,
@@ -323,23 +324,23 @@ st.dataframe(
         "rank_5d":   st.column_config.NumberColumn("5D Rank",   format="%d",     width=80),
         "rank_1m":   st.column_config.NumberColumn("1M Rank",   format="%d",     width=80),
         "composite": st.column_config.NumberColumn("Score",     format="%.1f",   width=70),
-        "â":        st.column_config.TextColumn("Overlap",  width=65),
+        "\u2705":        st.column_config.TextColumn("Overlap",  width=65),
     }
 )
 
-# ââ Run details ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# \u2500\u2500 Run details \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 with st.expander("Run details"):
     c1, c2 = st.columns(2)
     with c1:
         st.markdown(f"**ETF universe:** {status['universe']:,}")
-        st.markdown(f"**Leveraged/inverse excluded:** {status['excluded_lev']:,}")
+        st.markdown(f"**Leveraged/inverse excluded:** {status['excluded_lev']:,n}")
         st.markdown(f"**ETFs with all 3 returns:** {status['returned']:,}")
-        st.markdown(f"**Overlap cutoff:** Top%{status['cutoff']} per window")
+        st.markdown(f"**Overlap cutoff:** Top:{status['cutoff']} per window")
     with c2:
         st.markdown(f"**In top-{status['cutoff']} by 1D:** {status['top_1d']}")
         st.markdown(f"**In top-{status['cutoff']} by 5D:** {status['top_5d']}")
         st.markdown(f"**In top-{status['cutoff']} by 1M:** {status['top_1m']}")
 
 st.divider()
-st.caption("Data via yfinance Â· Returns based on prior close outside market hours (09:30â16:00 ET) Â· "
-           "Refreshes automatically every hour Â· First load each hour takes a few minutes")
+st.caption("Data via yfinance \xb7 Returns based on prior close outside market hours (09:30\u201316:00 ET) \xb7 "
+           "Refreshes automatically every hour \xb7 First load each hour takes a few minutes")
