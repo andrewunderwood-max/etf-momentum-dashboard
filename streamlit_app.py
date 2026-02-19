@@ -46,6 +46,15 @@ EXCLUDE_KEYWORDS = {
 def run_pipeline():
     status = {}
 
+    # ââ Market hours check (US Eastern) ââââââââââââââââââââââââââââââââââââââ
+    et_now = datetime.now(ZoneInfo("America/New_York"))
+    _h, _m = et_now.hour, et_now.minute
+    market_open = (
+        et_now.weekday() < 5                        # MondayâFriday
+        and (_h > 9 or (_h == 9 and _m >= 30))      # at or after 09:30
+        and _h < 16                                  # before 16:00
+    )
+
     # ââ Step 1: ETF Universe ââââââââââââââââââââââââââââââââââââââââââââââââââ
     def fetch(url):
         r = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
@@ -135,32 +144,35 @@ def run_pipeline():
 
     raw = pd.concat(all_batches, axis=1) if all_batches else pd.DataFrame()
 
-    # ââ Step 2b: Live intraday prices âââââââââââââââââââââââââââââââââââââââââ
+    # ââ Step 2b: Live intraday prices (market hours only) ââââââââââââââââââââ
+    # Outside 09:30â16:00 ET the 1-min data just echoes the prior close,
+    # which would make every 1D return â 0%.  Skip it entirely when closed.
     live_prices = {}
-    for i in range(0, len(etf_tickers), BATCH_SIZE):
-        batch = etf_tickers[i:i+BATCH_SIZE]
-        try:
-            intraday = yf.download(
-                " ".join(batch), period="1d", interval="1m",
-                group_by="ticker", auto_adjust=True,
-                progress=False, threads=False,
-            )
-            if not intraday.empty:
-                for t in batch:
-                    try:
-                        if len(batch) == 1:
-                            s_live = intraday["Close"].dropna()
-                        elif t in intraday.columns.get_level_values(0):
-                            s_live = intraday[t]["Close"].dropna()
-                        else:
-                            s_live = intraday["Close"][t].dropna() if "Close" in intraday else pd.Series(dtype=float)
-                        if len(s_live) > 0:
-                            live_prices[t] = float(s_live.iloc[-1])
-                    except Exception:
-                        pass
-        except Exception:
-            pass
-        time.sleep(1)
+    if market_open:
+        for i in range(0, len(etf_tickers), BATCH_SIZE):
+            batch = etf_tickers[i:i+BATCH_SIZE]
+            try:
+                intraday = yf.download(
+                    " ".join(batch), period="1d", interval="1m",
+                    group_by="ticker", auto_adjust=True,
+                    progress=False, threads=False,
+                )
+                if not intraday.empty:
+                    for t in batch:
+                        try:
+                            if len(batch) == 1:
+                                s_live = intraday["Close"].dropna()
+                            elif t in intraday.columns.get_level_values(0):
+                                s_live = intraday[t]["Close"].dropna()
+                            else:
+                                s_live = intraday["Close"][t].dropna() if "Close" in intraday else pd.Series(dtype=float)
+                            if len(s_live) > 0:
+                                live_prices[t] = float(s_live.iloc[-1])
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+            time.sleep(1)
 
     # ââ Step 3: Returns âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     closes = {}
@@ -241,7 +253,6 @@ def run_pipeline():
     df_top  = df_top[~df_top["Name"].apply(name_is_excluded)].reset_index(drop=True)
     status["excluded_lev"] += before2 - len(df_top)
 
-    et_now = datetime.now(ZoneInfo("America/New_York"))
     status.update({
         "cutoff":        cutoff,
         "overlap_count": len(overlap),
@@ -249,6 +260,7 @@ def run_pipeline():
         "top_5d":        len(t5),
         "top_1m":        len(tm),
         "run_time":      et_now.strftime("%b %d, %Y  %H:%M ET"),
+        "market_open":   market_open,
         "live_prices":   len(live_prices),
     })
 
@@ -273,7 +285,7 @@ m1, m2, m3, m4 = st.columns(4)
 m1.metric("Universe",        f"{status['universe']:,} ETFs")
 m2.metric("Strong overlap",  status["overlap_count"],
           help=f"ETFs in top-{status['cutoff']} across all 3 windows simultaneously")
-m3.metric("Live prices",     f"{status['live_prices']:,}")
+m3.metric("Prices",          "Live â" if status["market_open"] else "Prior close")
 m4.metric("Last updated",    status["run_time"])
 
 st.subheader(f"Top {DISPLAY_N} Momentum ETFs")
@@ -322,13 +334,12 @@ with st.expander("Run details"):
         st.markdown(f"**ETF universe:** {status['universe']:,}")
         st.markdown(f"**Leveraged/inverse excluded:** {status['excluded_lev']:,}")
         st.markdown(f"**ETFs with all 3 returns:** {status['returned']:,}")
-        st.markdown(f"**Overlap cutoff:** Top-{status['cutoff']} per window")
+        st.markdown(f"**Overlap cutoff:** Top%{status['cutoff']} per window")
     with c2:
         st.markdown(f"**In top-{status['cutoff']} by 1D:** {status['top_1d']}")
         st.markdown(f"**In top-{status['cutoff']} by 5D:** {status['top_5d']}")
         st.markdown(f"**In top-{status['cutoff']} by 1M:** {status['top_1m']}")
 
 st.divider()
-st.caption("Data via yfinance Â· Refreshes automatically every hour Â· "
-           "First load each hour takes a few minutes while data is fetched")
- 
+st.caption("Data via yfinance Â· Returns based on prior close outside market hours (09:30â16:00 ET) Â· "
+           "Refreshes automatically every hour Â· First load each hour takes a few minutes")
