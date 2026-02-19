@@ -282,7 +282,7 @@ with st.spinner("Loading ETF data \u2014 this takes a few minutes on first load 
     df_overlap, df_full, status = run_pipeline()
 
 # \u2500\u2500 Header metrics \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-m1, m2, m3, m4 = st.columns(4)
+m1, m2, m3, m4 = st.columns(4)
 m1.metric("Universe",        f"{status['universe']:,n} ETFs")
 m2.metric("Strong overlap",  status["overlap_count"],
           help=f"ETFs in top:{status['cutoff']} across all 3 windows simultaneously")
