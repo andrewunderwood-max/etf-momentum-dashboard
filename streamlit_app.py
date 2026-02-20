@@ -282,8 +282,8 @@ with st.spinner("Loading ETF data \u2014 this takes a few minutes on first load 
     df_overlap, df_full, status = run_pipeline()
 
 # \u2500\u2500 Header metrics \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Universe",        f"{status['universe']:,n} ETFs")
+m1, m2, m3, m4 = st.columns(4
+m1.metric("Universe",        f"{status['universe']:,} ETFs")
 m2.metric("Strong overlap",  status["overlap_count"],
           help=f"ETFs in top:{status['cutoff']} across all 3 windows simultaneously")
 m3.metric("Prices",          "Live \u2713" if status["market_open"] else "Prior close")
@@ -333,7 +333,7 @@ with st.expander("Run details"):
     c1, c2 = st.columns(2)
     with c1:
         st.markdown(f"**ETF universe:** {status['universe']:,}")
-        st.markdown(f"**Leveraged/inverse excluded:** {status['excluded_lev']:,n}")
+        st.markdown(f"**Leveraged/inverse excluded:** {status['excluded_lev']:,}")
         st.markdown(f"**ETFs with all 3 returns:** {status['returned']:,}")
         st.markdown(f"**Overlap cutoff:** Top:{status['cutoff']} per window")
     with c2:
